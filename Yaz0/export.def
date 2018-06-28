@@ -1,0 +1,10 @@
+EXPORTS
+
+OpenArchive=OpenArchive
+CloseArchive=CloseArchive
+ReadHeader=ReadHeader
+ProcessFile=ProcessFile
+SetChangeVolProc=SetChangeVolProc
+SetProcessDataProc=SetProcessDataProc
+GetPackerCaps=GetPackerCaps
+
