@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+*.suo
+*.opendb
+*.db
+
+Yaz0/x64
+Yaz0/Debug
+Yaz0/Release

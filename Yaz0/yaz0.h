@@ -42,6 +42,6 @@
 typedef unsigned char u8;
 typedef unsigned long u32;
 
-u32 yaz0_decode(u8 *src, u8 *dst, int& fileSizeCompressed);
+u32 yaz0_decode(u8 *src, u8 *dst);
 int yaz0_get_size(u8 * src);
 void yaz0_encode(u8 * src, int src_size, u8 *dst, int *dst_size);

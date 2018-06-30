@@ -28,7 +28,7 @@ int yaz0_get_size(u8 * src)
 	return U32(src + 0x4);
 }
 
-u32 yaz0_decode(u8 *src, u8 *dst, int& fileSizeCompressed)
+u32 yaz0_decode(u8 *src, u8 *dst)
 {
 	int siz = yaz0_get_size(src);
 	return yaz0_decode_internal(src + 0x10, dst, siz);

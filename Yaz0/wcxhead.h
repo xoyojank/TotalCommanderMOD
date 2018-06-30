@@ -27,10 +27,18 @@
 #define PK_OM_LIST          0
 #define PK_OM_EXTRACT       1
 
+// File Attributes
+#define FA_READONLY         0x1     //Read-only file
+#define FA_HIDDEN           0x2     //Hidden file
+#define FA_SYSTEM           0x4     //System file
+#define FA_VOLUME_ID        0x8     //Volume ID file
+#define FA_DIRECTORY        0x10    //Directory
+#define FA_ARCHIVE          0x20    //Archive file
+#define FA_ANY              0x3F    //Any file
+
 /* flags for ProcessFile */
 #define PK_SKIP             0            /* Skip this file */
 #define PK_TEST             1            /* Test file integrity */
-
 #define PK_EXTRACT          2            /* Extract to disk */
 
 /* Flags passed through ChangeVolProc */
@@ -111,7 +119,6 @@ typedef struct
 	int HostOS;
 	int FileCRC;
 	int FileTime;
-
 	int UnpVer;
 	int Method;
 	int FileAttr;
@@ -125,7 +132,6 @@ typedef struct
 
 typedef struct
 {
-
 	WCHAR ArcName[1024];
 	WCHAR FileName[1024];
 	int Flags;
@@ -160,7 +166,6 @@ typedef struct
 typedef struct
 {
 	WCHAR* ArcName;
-
 	int OpenMode;
 	int OpenResult;
 	WCHAR* CmtBuf;
@@ -171,7 +176,6 @@ typedef struct
 
 typedef struct
 {
-
 	int size;
 	DWORD PluginInterfaceVersionLow;
 	DWORD PluginInterfaceVersionHi;
@@ -193,9 +197,7 @@ typedef int(__stdcall *tProcessDataProc)(char *FileName, int Size);
 typedef int(__stdcall *tProcessDataProcW)(WCHAR *FileName, int Size);
 
 typedef int(__stdcall *tPkCryptProc)(int CryptoNr, int Mode,
-
                                      char* ArchiveName, char* Password, int maxlen);
 
 typedef int(__stdcall *tPkCryptProcW)(int CryptoNr, int Mode,
-
                                       WCHAR* ArchiveName, WCHAR* Password, int maxlen);
