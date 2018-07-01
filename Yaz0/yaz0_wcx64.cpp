@@ -231,6 +231,7 @@ int __stdcall ProcessFileW(HANDLE hArcData, int Operation, WCHAR* DestPath, WCHA
 		DWORD bytesWrite = 0;
 		if (!WriteFile(hFile, buffer, yaz0Archive->UnpackSize, &bytesWrite, NULL))
 			return E_EWRITE;
+		CloseHandle(hFile);
 	}
 	return 0;
 }
