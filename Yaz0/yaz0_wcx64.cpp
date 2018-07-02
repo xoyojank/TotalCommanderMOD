@@ -111,6 +111,7 @@ int __stdcall ReadHeader(HANDLE hArcData, tHeaderData* HeaderData)
 	INT archiveTime = 0;
 	FILETIME time;
 	GetFileTime(yaz0Archive->ArchiveHandle, &time, &time, &time);
+	FileTimeToLocalFileTime(&time, &time);
 	FileTimeToDosDateTime(&time, ((WORD*)&archiveTime) + 1, (WORD*)&archiveTime);
 
 	strcpy_s(HeaderData->ArcName, MAX_PATH, yaz0Archive->ArchiveName);
@@ -165,6 +166,7 @@ int __stdcall ReadHeaderExW(HANDLE hArcData, tHeaderDataExW* HeaderDataExW)
 	INT archiveTime = 0;
 	FILETIME time;
 	GetFileTime(yaz0Archive->ArchiveHandle, &time, &time, &time);
+	FileTimeToLocalFileTime(&time, &time);
 	FileTimeToDosDateTime(&time, ((WORD*)&archiveTime) + 1, (WORD*)&archiveTime);
 
 	wcscpy_s(HeaderDataExW->ArcName, MAX_PATH, yaz0Archive->ArchiveNameW);
