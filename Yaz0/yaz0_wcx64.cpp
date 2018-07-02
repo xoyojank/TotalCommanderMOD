@@ -119,7 +119,17 @@ int __stdcall ReadHeader(HANDLE hArcData, tHeaderData* HeaderData)
 	{
 		if (HeaderData->FileName[i] == '.')
 		{
-			HeaderData->FileName[i] = '\0';
+			if (HeaderData->FileName[i + 1] == 's')
+			{
+				for (int j = i + 1; HeaderData->FileName[j] != 0; ++j)
+				{
+					HeaderData->FileName[j] = HeaderData->FileName[j + 1];
+				}
+			}
+			else
+			{
+				HeaderData->FileName[i] = '\0';
+			}
 			break;
 		}
 	}
@@ -163,7 +173,17 @@ int __stdcall ReadHeaderExW(HANDLE hArcData, tHeaderDataExW* HeaderDataExW)
 	{
 		if (HeaderDataExW->FileName[i] == L'.')
 		{
-			HeaderDataExW->FileName[i] = L'\0';
+			if (HeaderDataExW->FileName[i + 1] == L's')
+			{
+				for (int j = i + 1; HeaderDataExW->FileName[j] != 0; ++j)
+				{
+					HeaderDataExW->FileName[j] = HeaderDataExW->FileName[j + 1];
+				}
+			}
+			else
+			{
+				HeaderDataExW->FileName[i] = L'\0';
+			}
 			break;
 		}
 	}
