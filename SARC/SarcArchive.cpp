@@ -6,19 +6,54 @@ SarcArchive::SarcArchive(const char* arcName)
 	: curIndex(0)
 	, archiveName(arcName)
 {
-	this->hArcFile = CreateFile(arcName, GENERIC_READ, FILE_SHARE_READ,
-	                            0, OPEN_EXISTING, 0, NULL);
+	this->hArcFile = CreateFileA(arcName, GENERIC_READ, FILE_SHARE_READ,
+	                             0, OPEN_EXISTING, 0, NULL);
 	assert(INVALID_HANDLE_VALUE != this->hArcFile);
+	ReadFileTime();
+}
+
+//------------------------------------------------------------------------------
+SarcArchive::SarcArchive(const wchar_t* arcName)
+	: curIndex(0)
+	, archiveNameW(arcName)
+{
+	this->hArcFile = CreateFileW(arcName, GENERIC_READ, FILE_SHARE_READ,
+	                             0, OPEN_EXISTING, 0, NULL);
+	assert(INVALID_HANDLE_VALUE != this->hArcFile);
+	ReadFileTime();
+	ReadFileHeader();
+}
+
+//------------------------------------------------------------------------------
+void
+SarcArchive::ReadFileTime()
+{
 	// get file time
 	FILETIME time;
 	BOOL result = GetFileTime(this->hArcFile, &time, &time, &time);
 	assert(TRUE == result);
 	FileTimeToLocalFileTime(&time, &time);
 	FileTimeToDosDateTime(&time, ((WORD*)&this->archiveTime) + 1, (WORD*)&this->archiveTime);
+	ReadFileHeader();
 }
 
 //------------------------------------------------------------------------------
-bool SarcArchive::LoadContent()
+wstring
+StringToWstring(const string str)
+{
+	size_t len = str.size() * 2;
+	setlocale(LC_CTYPE, "");
+	wchar_t *p = new wchar_t[len];
+	size_t converted = 0;
+	mbstowcs_s(&converted, p, len, str.c_str(), _TRUNCATE);
+	std::wstring str1(p);
+	delete[] p;
+	return str1;
+}
+
+//------------------------------------------------------------------------------
+bool
+SarcArchive::ReadFileHeader()
 {
 	// reader header
 	SARC_HEADER sarcHeader;
@@ -57,10 +92,11 @@ bool SarcArchive::LoadContent()
 		return false;
 	vector<char> buffer(sarcHeader.dataOffset - this->Tell());
 	this->ReadData(buffer.data(), buffer.size());
-	uint32_t pos = 0;
+	size_t pos = 0;
 	for (uint32_t i = 0; i < this->files.size(); ++i)
 	{
 		this->files[i].path = buffer.data()[pos];
+		this->files[i].pathW = StringToWstring(this->files[i].path);
 		pos += this->files[i].path.size();
 		if (i + 1 < this->files.size())
 		{
@@ -68,6 +104,7 @@ bool SarcArchive::LoadContent()
 				++pos;
 		}
 	}
+	return true;
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +117,7 @@ SarcArchive::~SarcArchive()
 
 //------------------------------------------------------------------------------
 void
-SarcArchive::ReadData(void* ptr, UINT size)
+SarcArchive::ReadData(void* ptr, size_t size)
 {
 	DWORD bytesRead;
 	BOOL result = ReadFile(this->hArcFile, ptr, size, &bytesRead, NULL);
@@ -88,7 +125,9 @@ SarcArchive::ReadData(void* ptr, UINT size)
 	assert(bytesRead == size);
 }
 
-DWORD SarcArchive::Tell() const
+//------------------------------------------------------------------------------
+DWORD
+SarcArchive::Tell() const
 {
 	return SetFilePointer(this->hArcFile, 0, NULL, FILE_CURRENT);
 }
@@ -98,10 +137,33 @@ bool
 SarcArchive::ExtractFile(const char* destPath)
 {
 	// create file
-	HANDLE hFile = CreateFile(destPath, GENERIC_WRITE, FILE_SHARE_READ, 0,
-	                          CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE, NULL);
+	HANDLE hFile = CreateFileA(destPath, GENERIC_WRITE, FILE_SHARE_READ, 0,
+	                           CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE, NULL);
 	if (INVALID_HANDLE_VALUE == hFile)
 		return false;
+	WriteFileData(hFile);
+
+	return true;
+}
+
+//------------------------------------------------------------------------------
+bool
+SarcArchive::ExtractFileW(const wchar_t* destPath)
+{
+	// create file
+	HANDLE hFile = CreateFileW(destPath, GENERIC_WRITE, FILE_SHARE_READ, 0,
+	                           CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE, NULL);
+	if (INVALID_HANDLE_VALUE == hFile)
+		return false;
+	WriteFileData(hFile);
+
+	return true;
+}
+
+//------------------------------------------------------------------------------
+void
+SarcArchive::WriteFileData(HANDLE hFile)
+{
 	// write data
 	static vector<byte> buffer;
 	const File& file = this->files[this->curIndex];
@@ -120,6 +182,4 @@ SarcArchive::ExtractFile(const char* destPath)
 	assert(TRUE == result);
 	// close file
 	CloseHandle(hFile);
-
-	return true;
 }

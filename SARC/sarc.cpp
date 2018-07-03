@@ -35,8 +35,8 @@ int __stdcall ReadHeader(HANDLE hArcData, tHeaderData* HeaderData)
 	if (!sarcArchive->HasNextFile())
 		return E_END_ARCHIVE;
 
-	lstrcpy(HeaderData->ArcName, sarcArchive->GetArchiveName());
-	lstrcpy(HeaderData->FileName, sarcArchive->GetCurFileName());
+	strcpy_s(HeaderData->ArcName, MAX_PATH, sarcArchive->GetArchiveName());
+	strcpy_s(HeaderData->FileName, MAX_PATH, sarcArchive->GetCurFileName());
 	HeaderData->FileTime = sarcArchive->GetArchiveTime();
 	HeaderData->PackSize = sarcArchive->GetCurFileSize();
 	HeaderData->UnpSize = HeaderData->PackSize;
@@ -56,8 +56,8 @@ int __stdcall ReadHeaderExW(HANDLE hArcData, tHeaderDataExW* HeaderData)
 	if (!sarcArchive->HasNextFile())
 		return E_END_ARCHIVE;
 
-	lstrcpy(HeaderData->ArcName, sarcArchive->GetArchiveName());
-	lstrcpy(HeaderData->FileName, sarcArchive->GetCurFileName());
+	wcscpy_s(HeaderData->ArcName, MAX_PATH, sarcArchive->GetArchiveNameW());
+	wcscpy_s(HeaderData->FileName, MAX_PATH, sarcArchive->GetCurFileNameW());
 	HeaderData->FileTime = sarcArchive->GetArchiveTime();
 	HeaderData->PackSize = sarcArchive->GetCurFileSize();
 	HeaderData->UnpSize = HeaderData->PackSize;
@@ -78,9 +78,12 @@ int __stdcall ProcessFile(HANDLE hArcData, int Operation, char* DestPath, char* 
 		char path[MAX_PATH * 2];
 		path[0] = 0;
 		if (DestPath)
-			lstrcpy(path, DestPath);
+			strcpy_s(path, MAX_PATH * 2, DestPath);
 		if (DestName)
-			lstrcat(lstrcat(path, path[0] ? "\\" : ""), DestName);
+		{
+			strcat_s(path, MAX_PATH * 2, path[0] ? "\\" : "");
+			strcat_s(path, MAX_PATH * 2, DestName);
+		}
 
 		sarcArchive->ExtractFile(path);
 	}
@@ -89,6 +92,7 @@ int __stdcall ProcessFile(HANDLE hArcData, int Operation, char* DestPath, char* 
 
 	return 0;
 }
+
 //------------------------------------------------------------------------------
 int __stdcall ProcessFileW(HANDLE hArcData, int Operation, WCHAR* DestPath, WCHAR* DestName)
 {
@@ -99,14 +103,18 @@ int __stdcall ProcessFileW(HANDLE hArcData, int Operation, WCHAR* DestPath, WCHA
 
 	if (Operation == PK_EXTRACT)
 	{
-		char path[MAX_PATH * 2];
+		wchar_t path[MAX_PATH * 2];
+		path[0] = 0;
 		path[0] = 0;
 		if (DestPath)
-			lstrcpy(path, DestPath);
+			wcscpy_s(path, MAX_PATH * 2, DestPath);
 		if (DestName)
-			lstrcat(lstrcat(path, path[0] ? "\\" : ""), DestName);
+		{
+			wcscat_s(path, MAX_PATH * 2, path[0] ? L"\\" : L"");
+			wcscat_s(path, MAX_PATH * 2, DestName);
+		}
 
-		sarcArchive->ExtractFile(path);
+		sarcArchive->ExtractFileW(path);
 	}
 
 	sarcArchive->NextFile();
@@ -147,6 +155,3 @@ int __stdcall GetPackerCaps()
 {
 	return PK_CAPS_SEARCHTEXT;
 }
-
-
-

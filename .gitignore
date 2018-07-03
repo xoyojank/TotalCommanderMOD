@@ -37,3 +37,11 @@
 Yaz0/x64
 Yaz0/Debug
 Yaz0/Release
+*.pdb
+*.sbr
+*.log
+*.tlog
+*.user
+*.exp
+*.iobj
+*.ipdb
