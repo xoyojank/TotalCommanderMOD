@@ -34,8 +34,9 @@ struct SFAT_HEADER
 struct SFAT_NODE
 {
 	uint32_t fileNameHash;
-	uint8_t  nodeType : 8;
-	uint32_t fileNameTableOffset : 24;  // 3-byte offset into string table below
+	//uint8_t  nodeType : 8;
+	//uint32_t fileNameTableOffset : 24;  // 3-byte offset into string table below
+	uint32_t nodeType_FileNameTableOffset;
 	uint32_t nodeDataBeginOffset;
 	uint32_t nodeDataEndOffset;
 };

@@ -1,10 +1,31 @@
 #include "SarcArchive.h"
 #include "sarc.h"
 
+template<>
+uint16_t& SarcArchive::SwapOrder(uint16_t& value)
+{
+	if (this->isLittleEndian)
+	{
+		value = (value << 8) | (value >> 8);
+	}
+	return value;
+}
+template<>
+uint32_t& SarcArchive::SwapOrder(uint32_t& value)
+{
+	if (this->isLittleEndian)
+	{
+		value = ((value << 8) & 0xFF00FF00) | ((value >> 8) & 0xFF00FF);
+		value = (value << 16) | (value >> 16);
+	}
+	return value;
+}
+
 //------------------------------------------------------------------------------
 SarcArchive::SarcArchive(const char* arcName)
 	: curIndex(0)
 	, archiveName(arcName)
+	, dataOffset(0)
 {
 	this->hArcFile = CreateFileA(arcName, GENERIC_READ, FILE_SHARE_READ,
 	                             0, OPEN_EXISTING, 0, NULL);
@@ -16,6 +37,7 @@ SarcArchive::SarcArchive(const char* arcName)
 SarcArchive::SarcArchive(const wchar_t* arcName)
 	: curIndex(0)
 	, archiveNameW(arcName)
+	, isLittleEndian(false)
 {
 	this->hArcFile = CreateFileW(arcName, GENERIC_READ, FILE_SHARE_READ,
 	                             0, OPEN_EXISTING, 0, NULL);
@@ -60,26 +82,34 @@ SarcArchive::ReadFileHeader()
 	this->ReadData(&sarcHeader, sizeof(sarcHeader));
 	if (sarcHeader.magic != 'CRAS')
 		return false;
-	if (sarcHeader.headerLength != 0x14)
+	this->isLittleEndian = (sarcHeader.byteOrder != 0xFEFF);
+	this->SwapOrder(sarcHeader.headerLength);
+	this->SwapOrder(sarcHeader.fileSize);
+	this->SwapOrder(sarcHeader.dataOffset);
+	if (sarcHeader.headerLength != 0x0014)
 		return false;
-	if (sarcHeader.byteOrder != 0xFEFF)
-		return false;
+	this->dataOffset = sarcHeader.dataOffset;
 
 	// read file table
 	SFAT_HEADER sfatHeader;
 	this->ReadData(&sfatHeader, sizeof(sfatHeader));
+	this->SwapOrder(sfatHeader.headerLength);
+	this->SwapOrder(sfatHeader.nodeCount);
+	this->SwapOrder(sfatHeader.hashMultiplier);
 	if (sfatHeader.magic != 'TAFS')
 		return false;
-	if (sfatHeader.headerLength != 0xC)
+	if (sfatHeader.headerLength != 0x000C)
 		return false;
-	if (sfatHeader.hashMultiplier != 0x65)
+	if (sfatHeader.hashMultiplier != 0x00000065)
 		return false;
 	this->files.resize(sfatHeader.nodeCount);
 	for (int i = 0; i < this->files.size(); ++i)
 	{
 		SFAT_NODE sfatNode;
 		this->ReadData(&sfatNode, sizeof(sfatNode));
-		this->files[i].offset = sarcHeader.dataOffset + sfatNode.nodeDataBeginOffset;
+		this->SwapOrder(sfatNode.nodeDataBeginOffset);
+		this->SwapOrder(sfatNode.nodeDataEndOffset);
+		this->files[i].offset = sfatNode.nodeDataBeginOffset;
 		this->files[i].size = sfatNode.nodeDataEndOffset - sfatNode.nodeDataBeginOffset;
 	}
 
@@ -88,14 +118,15 @@ SarcArchive::ReadFileHeader()
 	this->ReadData(&sfntHeader, sizeof(sfntHeader));
 	if (sfntHeader.magic != 'TNFS')
 		return false;
-	if (sfntHeader.headerLength != 0x8)
+	this->SwapOrder(sfntHeader.headerLength);
+	if (sfntHeader.headerLength != 0x0008)
 		return false;
 	vector<char> buffer(sarcHeader.dataOffset - this->Tell());
 	this->ReadData(buffer.data(), buffer.size());
 	size_t pos = 0;
 	for (uint32_t i = 0; i < this->files.size(); ++i)
 	{
-		this->files[i].path = buffer.data()[pos];
+		this->files[i].path = (const char*)(buffer.data() + pos);
 		this->files[i].pathW = StringToWstring(this->files[i].path);
 		pos += this->files[i].path.size();
 		if (i + 1 < this->files.size())
@@ -168,7 +199,7 @@ SarcArchive::WriteFileData(HANDLE hFile)
 	static vector<byte> buffer;
 	const File& file = this->files[this->curIndex];
 	buffer.resize(file.size);
-	SetFilePointer(this->hArcFile, file.offset, NULL, FILE_BEGIN);
+	SetFilePointer(this->hArcFile, this->dataOffset + file.offset, NULL, FILE_BEGIN);
 	this->ReadData(&buffer.front(), buffer.size());
 	DWORD bytesWrite;
 	BOOL result = WriteFile(hFile, &buffer.front(), buffer.size(), &bytesWrite, NULL);

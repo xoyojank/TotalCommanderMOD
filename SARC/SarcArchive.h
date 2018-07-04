@@ -40,13 +40,18 @@ private:
 
 	void ReadFileTime();
 	void WriteFileData(HANDLE hFile);
+
+	template<typename T>
+	T& SwapOrder(T& value);
 private:
 	string archiveName;
 	wstring archiveNameW;
 	int archiveTime;
+	UINT dataOffset;
 	vector<File> files;
 	UINT curIndex;
 	HANDLE hArcFile;
+	bool isLittleEndian;
 
 public:
 	tChangeVolProc   ChangeVolProc;
